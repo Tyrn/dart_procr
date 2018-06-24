@@ -61,9 +61,9 @@ void main() {
     expect(["alfa", "bravo"].join(", "), "alfa, bravo");
     expect("щука"[0].toUpperCase(), "Щ");
     expect('alfa, bravo'.split(','), ["alfa", " bravo"]);
-    expect("Kubler - -Ross".split(new RegExp(r'\s*(?:-\s*)+')), ["Kubler", "Ross"]);
+    expect("Kubler - -Ross".split(rHyph), ["Kubler", "Ross"]);
     expect('alfa"br"bravo"ch"charlie'
-                  .replaceAll(new RegExp(r'\"(?:\\.|[^\"\\])*\"'), " "),
+                  .replaceAll(rSubstring, " "),
             "alfa bravo charlie");
   });
 
