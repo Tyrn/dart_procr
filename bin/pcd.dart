@@ -59,6 +59,48 @@ List<int> strStripNumbers(String s) {
 }
 
 
+/// Compares two paths (directories).
+/// 
+int comparePath(String x, String y) {
+  return opt['sort-lex'] ? x.compareTo(y) : strcmpNaturally(x, y);
+}
+
+
+/// Compares two paths, filenames only, ignoring extensions.
+/// 
+int compareFile(String x, String y) {
+  var a = p.dirname(x) + p.basenameWithoutExtension(x);
+  var b = p.dirname(y) + p.basenameWithoutExtension(y);
+
+  return opt['sort-lex'] ? a.compareTo(b) : strcmpNaturally(a, b);
+}
+
+
+/// Returns a raw list of the [path] offspring.
+/// 
+List listOffspring(String path) {
+  var dir = new Directory(path);
+  return dir.listSync();
+}
+
+
+/// Returns a sorted list of directory paths, according to options.
+/// 
+List<String> groomDirs(List offspring, [bool rev=false]) {
+  return offspring.where((x) => x is Directory).map((x) => x.path).toList(growable: false)
+                  ..sort(rev ? (x, y) => comparePath(y, x) : comparePath);
+}
+
+
+/// Returns a sorted list of file paths, according to options.
+/// 
+List<String> groomFiles(List offspring, [bool rev=false]) {
+  return offspring.where((x) => x is File && isAudiofile(x.path))
+                  .map((x) => x.path).toList(growable: false)
+                  ..sort(rev ? (x, y) => compareFile(y, x) : compareFile);
+}
+
+
 var rInt = new RegExp(r'\d+');
 var rDot = new RegExp(r'[\s.]+');
 var rHyph = new RegExp(r'\s*(?:-\s*)+');
@@ -76,43 +118,34 @@ String makeInitials(String authors) {
 }
 
 
-List listOffspring(String path) {
-  var dir = new Directory(path);
-  return dir.listSync();
+/// Returns true, if [path] is a recognized audio file.
+/// 
+bool isAudiofile(String path) {
+  var e = ['.MP3', '.M4A', '.M4B', '.OGG', '.WMA', '.FLAC'];
+
+  return e.indexOf(p.extension(path).toUpperCase()) < 0 ? false : true;
 }
 
 
-List<String> groomDirs(List offspring) {
-  return offspring.where((x) => x is Directory).map((x) => x.path).toList(growable: false)
-                  ..sort();
-}
-
-
-List<String> groomFiles(List offspring) {
-  return offspring.where((x) => x is File).map((x) => x.path).toList(growable: false)
-                  ..sort();
-}
-
-
+/// Returns full recursive count of audiofiles in the [path] directory.
+/// 
 int audiofilesCount(String path) {
   var dir = new Directory(path);
   var cnt = 0;
 
-  List contents = dir.listSync();
-  for (var fileOrDir in contents) {
-    if (fileOrDir is File) {
-      print(fileOrDir.path);
-      cnt++;
-    } else if (fileOrDir is Directory) {
-      print('${fileOrDir.path} (dir)');
-    }
+  List contents = dir.listSync(recursive: true);
+  for(var x in contents) {
+    if(x is File && isAudiofile(x.path)) cnt++;
   }
   return cnt;
 }
 
 
+/// Sets up boilerplate required by the options; runs the show.
+/// 
 buildAlbum() {
-  audiofilesCount(srcDir);
+  var cnt = audiofilesCount(srcDir);
+  print('Audiofiles count: $cnt');
 }
 
 
@@ -121,7 +154,7 @@ main(List<String> arguments) {
   srcDir = checkDirectory(opt.rest[0]);
   dstDir = checkDirectory(opt.rest[1], "Destination");
 
-  // buildAlbum();
+  buildAlbum();
 
   var offsp = listOffspring(srcDir), dirs = groomDirs(offsp), files = groomFiles(offsp);
   dirs.forEach(print); print('');
