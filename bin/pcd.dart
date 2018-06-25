@@ -86,18 +86,18 @@ List listOffspring(String path) {
 
 /// Returns a sorted list of directory paths, according to options.
 /// 
-List<String> groomDirs(List offspring, [bool rev=false]) {
+List<String> groomDirs(List offspring, {bool reverse: false}) {
   return offspring.where((x) => x is Directory).map((x) => x.path).toList(growable: false)
-                  ..sort(rev ? (x, y) => comparePath(y, x) : comparePath);
+                  ..sort(reverse ? (x, y) => comparePath(y, x) : comparePath);
 }
 
 
 /// Returns a sorted list of file paths, according to options.
 /// 
-List<String> groomFiles(List offspring, [bool rev=false]) {
+List<String> groomFiles(List offspring, {bool reverse: false}) {
   return offspring.where((x) => x is File && isAudiofile(x.path))
                   .map((x) => x.path).toList(growable: false)
-                  ..sort(rev ? (x, y) => compareFile(y, x) : compareFile);
+                  ..sort(reverse ? (x, y) => compareFile(y, x) : compareFile);
 }
 
 
@@ -141,11 +141,128 @@ int audiofilesCount(String path) {
 }
 
 
+String decorateDirName(int i, String path) {
+  return (opt['strip-decorations'] ? '' : i.toString().padLeft(3, "0") + '-') + p.basename(path);
+}
+
+
+String artist() {return opt['artist-tag'] == null ? "" : opt['artist-tag'];}
+
+
+String decorateFileName(int i, List<String> dstStep, String path) {
+  if(opt['strip-decorations']) return p.basename(path);
+  var prefix  = i.toString().padLeft(_wdh_, "0")
+              + (opt['prepend-subdir-name'] && !opt['tree-dst'] && dstStep.length > 0
+              ? '-' + dstStep.join('-') + '-' : '-');
+  return prefix + (opt['unified-name'] == null
+                ? p.basename(path)
+                : opt['unified-name'] + ' - ' + artist() + p.extension(path));
+}
+
+
+void copyFile(String src, String dst, {bool reverse: false}) {
+  new File(src).copySync(dst);
+  opt['verbose'] ? print(_cnt_.toString().padLeft(_wdh_, ' ') + '/$_tot_ $dst') : stdout.write('.');
+  reverse ? _cnt_-- : _cnt_++;
+}
+
+
+void traverseTreeDst(String src, String dstRoot, List<String> dstStep) {
+  var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
+
+  for(var i = 0; i < dirs.length; i++) {
+    var step = new List<String>.from(dstStep);
+    step.add(decorateDirName(i, dirs[i]));
+    new Directory(p.join(dstRoot, p.joinAll(step))).createSync();
+    traverseTreeDst(dirs[i], dstRoot, step);
+  }
+  for(var i = 0; i < files.length; i++) {
+    var dstPath = p.join(dstRoot, p.join(p.joinAll(dstStep), decorateFileName(i, dstStep, files[i])));
+    copyFile(files[i], dstPath);
+  }
+}
+
+
+void traverseFlatDst(String src, String dstRoot, List<String> dstStep) {
+  var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
+
+  for(var i = 0; i < dirs.length; i++) {
+    var step = new List<String>.from(dstStep);
+    step.add(p.basename(dirs[i]));
+    traverseFlatDst(dirs[i], dstRoot, step);
+  }
+  for(var i = 0; i < files.length; i++) {
+    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, files[i]));
+    copyFile(files[i], dstPath);
+  }
+}
+
+
+void traverseFlatDstR(String src, String dstRoot, List<String> dstStep) {
+  var g = listOffspring(src), dirs = groomDirs(g, reverse: true), files = groomFiles(g, reverse: true);
+
+  for(var i = 0; i < files.length; i++) {
+    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, files[i]));
+    copyFile(files[i], dstPath, reverse: true);
+  }
+  for(var i = 0; i < dirs.length; i++) {
+    var step = new List<String>.from(dstStep);
+    step.add(p.basename(dirs[i]));
+    traverseFlatDstR(dirs[i], dstRoot, step);
+  }
+}
+
+
+var _cnt_ = 1;
+var _tot_ = 0;
+var _wdh_ = 0;
+
+
+void groom(String src, String dst) {
+
+  if(opt['tree-dst']) {
+    traverseTreeDst(src, dst, []);
+  } else if(opt['reverse']) {
+    _cnt_ = _tot_;
+    traverseFlatDstR(src, dst, []);
+  } else {
+    traverseFlatDst(src, dst, []);
+  }
+}
+
+
 /// Sets up boilerplate required by the options; runs the show.
 /// 
-buildAlbum() {
-  var cnt = audiofilesCount(srcDir);
-  print('Audiofiles count: $cnt');
+void buildAlbum() {
+  _tot_ = audiofilesCount(srcDir);
+  _wdh_ = _tot_.toString().length;
+
+  if(_tot_ < 1) {
+    print('There are no supported audio files in the source directory "${srcDir}".');
+    exit(0);
+  }
+  var prefix   = opt['album-num'] == null ? '' : opt['album-num'].padLeft(2, "0") + '-';
+  var baseDst  = prefix + (opt['unified-name'] == null
+                        ? p.basename(srcDir)
+                        : artist() + ' - ' + opt['unified-name']);
+  var executiveDst = p.join(dstDir, (opt['drop-dst'] ? '' : baseDst));
+
+  if(!opt['drop-dst']) {
+    if(FileSystemEntity.isDirectorySync(executiveDst)) {
+      print('Destination directory "${executiveDst}" already exists.');
+      exit(0);
+    } else {
+      new Directory(executiveDst).createSync();
+    }
+  }
+  // Running, at last!
+  if(opt['verbose']) {
+    groom(srcDir, executiveDst);
+  } else {
+    stdout.write('Starting ');
+    groom(srcDir, executiveDst);
+    print(' Done($_tot_)');
+  }
 }
 
 
@@ -155,12 +272,6 @@ main(List<String> arguments) {
   dstDir = checkDirectory(opt.rest[1], "Destination");
 
   buildAlbum();
-
-  var offsp = listOffspring(srcDir), dirs = groomDirs(offsp), files = groomFiles(offsp);
-  dirs.forEach(print); print('');
-  files.forEach(print);
-
-  print('src: "$srcDir", dst: "$dstDir"');
 }
 
 
