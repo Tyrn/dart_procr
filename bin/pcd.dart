@@ -81,7 +81,7 @@ List listOffspring(String path) {
 List<String> groomDirs(List offspring, {bool reverse: false}) {
   return offspring
       .where((x) => x is Directory)
-      .map((x) => x.path)
+      .map((x) => x.path.toString())
       .toList(growable: false)
     ..sort(reverse ? (x, y) => comparePath(y, x) : comparePath);
 }
@@ -91,7 +91,7 @@ List<String> groomDirs(List offspring, {bool reverse: false}) {
 List<String> groomFiles(List offspring, {bool reverse: false}) {
   return offspring
       .where((x) => x is File && isAudiofile(x.path))
-      .map((x) => x.path)
+      .map((x) => x.path.toString())
       .toList(growable: false)
     ..sort(reverse ? (x, y) => compareFile(y, x) : compareFile);
 }
