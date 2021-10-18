@@ -151,8 +151,11 @@ String decorateDirName(int i, String path) {
       p.basename(path);
 }
 
-String artist() {
-  return opt['artist-tag'] == null ? "" : opt['artist-tag'];
+String artist({prefix = "", suffix = ""}) {
+  if (opt['artist'] != null) {
+    return prefix + opt['artist'] + suffix;
+  }
+  return "";
 }
 
 String decorateFileName(int i, List<String> dstStep, String path) {
@@ -164,7 +167,7 @@ String decorateFileName(int i, List<String> dstStep, String path) {
   return prefix +
       (opt['unified-name'] == null
           ? p.basename(path)
-          : opt['unified-name'] + ' - ' + artist() + p.extension(path));
+          : opt['unified-name'] +  artist(prefix: " - ") + p.extension(path));
 }
 
 void copyFile(String src, String dst, {bool reverse: false}) {
@@ -252,7 +255,7 @@ void buildAlbum() {
   var baseDst = prefix +
       (opt['unified-name'] == null
           ? p.basename(srcDir)
-          : artist() + ' - ' + opt['unified-name']);
+          : artist(suffix: " - ") + opt['unified-name']);
   var executiveDst = p.join(dstDir, (opt['drop-dst'] ? '' : baseDst));
 
   if (!opt['drop-dst']) {
@@ -371,9 +374,9 @@ retrieveArgs(List<String> arguments) {
       help: "Accept only audio files of the specified type.");
   parser.addOption("unified-name",
       abbr: "u", valueHelp: "name", help: unifiedNameHelp);
-  parser.addOption("artist-tag",
+  parser.addOption("artist",
       abbr: "a", valueHelp: "tag", help: "Artist tag.");
-  parser.addOption("album-tag",
+  parser.addOption("album",
       abbr: "m", valueHelp: "tag", help: "Album tag.");
   parser.addOption("album-num",
       abbr: "b",
