@@ -296,14 +296,21 @@ String checkDirectory(String path, [String kindOf = "Source"]) {
 }
 
 var description = '''
-pcd "Procrustes" SmArT is a CLI utility for copying subtrees containing supported audio
-files in sequence, naturally sorted.
-The end result is a "flattened" copy of the source subtree. "Flattened" means
-that only a namesake of the root source directory is created, where all the files get
-copied to, names prefixed with a serial number. Tag "Track Number"
-is set, tags "Title", "Artist", and "Album" can be replaced optionally.
-The writing process is strictly sequential: either starting with the number one file,
-or in the reversed order. This can be important for some mobile devices.
+    Damastes a.k.a. Procrustes is a CLI utility for copying directories and subdirectories
+    containing supported audio files in sequence, naturally sorted.
+    The end result is a "flattened" copy of the source subtree. "Flattened" means
+    that only a namesake of the root source directory is created, where all the files get
+    copied to, names prefixed with a serial number. Tag "Track Number"
+    is set, tags "Title", "Artist", and "Album" can be replaced optionally.
+    The writing process is strictly sequential: either starting with the number one file,
+    or in the reverse order. This can be important for some mobile devices.
+    \u{274c} Broken media;
+    \u{2754} Suspicious media.
+
+    Example:
+
+    robinson-crusoe \$ damastes -va 'Daniel "Goldeneye" Defoe' -u 'Robinson Crusoe' .
+    /run/media/player
 ''';
 var unifiedNameHelp = '''
 Destination root directory name and file names are based on <name>,
@@ -336,7 +343,9 @@ retrieveArgs(List<String> arguments) {
       help: "Retain the tree structure of the source album at destination.",
       negatable: false);
   parser.addFlag("drop-dst",
-      abbr: "p", help: "Do not create destination directory.", negatable: false);
+      abbr: "p",
+      help: "Do not create destination directory.",
+      negatable: false);
   parser.addFlag("reverse",
       abbr: "r",
       help:
@@ -344,18 +353,14 @@ retrieveArgs(List<String> arguments) {
       negatable: false);
   parser.addFlag("overwrite",
       abbr: "w",
-      help:
-      "Silently remove existing destination directory (not recommended).",
+      help: "Silently remove existing destination directory (not recommended).",
       negatable: false);
   parser.addFlag("dry-run",
       abbr: "y",
-      help:
-      "Without actually modifying anything (trumps -w, too).",
+      help: "Without actually modifying anything (trumps -w, too).",
       negatable: false);
   parser.addFlag("count",
-      abbr: "c",
-      help: "Just count the files.",
-      negatable: false);
+      abbr: "c", help: "Just count the files.", negatable: false);
   parser.addFlag("prepend-subdir-name",
       abbr: "i",
       help: "Prepend current subdirectory name to a file name.",
