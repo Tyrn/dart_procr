@@ -43,7 +43,15 @@ void main() {
     expect(strStripNumbers("Ignacio Vazquez-Abrams"), []);
   });
 
-  test('makeInitials: reduces a list of authors to a list of initials.', () {
+  // There are four delimiters: comma, hyphen, dot, and space. makeInitials()
+  // syntax philosophy: if a delimiter is misplaced, it's ignored.
+  test("makeInitials: reduces a list of authors to a list of initials.", () {
+    expect(makeInitials(""), "");
+    expect(makeInitials(" "), "");
+    expect(makeInitials(".. , .. "), "");
+    expect(makeInitials(" ,, .,"), "");
+    expect(makeInitials(", a. g, "), "A.G.");
+    expect(makeInitials("- , -I.V.-A,E.C.N-, ."), "I.V-A.,E.C.N.");
     expect(makeInitials("John ronald reuel Tolkien"), "J.R.R.T.");
     expect(makeInitials("  e.B.Sledge "), "E.B.S.");
     expect(makeInitials("Apsley Cherry-Garrard"), "A.C-G.");
@@ -53,9 +61,14 @@ void main() {
     expect(makeInitials('Arleigh "31-knot"Burke '), "A.B.");
     expect(
         makeInitials('Harry "Bing" Crosby, Kris "Tanto" Paronto'), "H.C.,K.P.");
-    expect(makeInitials("a.s.,b.s."), "A.S.,B.S.");
+    expect(
+        makeInitials(
+            "William J. \"Wild Bill\" Donovan, Marta \"Cinta Gonzalez"),
+        "W.J.D.,M.C.G.");
+    expect(makeInitials("a.s , - . ,b.s."), "A.S.,B.S.");
     expect(makeInitials("A. Strugatsky, B...Strugatsky."), "A.S.,B.S.");
-    expect(makeInitials("Иржи Кропачек, Йозеф Новотный"), "И.К.,Й.Н.");
+    expect(makeInitials("Иржи Кропачек,, Йозеф Новотный"), "И.К.,Й.Н.");
+    expect(makeInitials("Österreich über alles"), "Ö.Ü.A.");
   });
 
   test('Strings and lists of strings, review.', () {

@@ -106,10 +106,14 @@ var rSubstring = new RegExp(r'\"(?:\\.|[^\"\\])*\"');
 String makeInitials(String authors) {
   return authors
       .replaceAll(rSubstring, " ")
+      .replaceAll('"', " ")
       .split(",")
+      .where((author) =>
+          author.replaceAll(".", "").replaceAll("-", "").trim() != "")
       .map((author) =>
           author
-              .split(rHyph)
+              .split("-")
+              .where((author) => author.replaceAll(".", "").trim() != "")
               .map((barrel) => barrel
                   .split(rDot)
                   .where((name) => name != "")
