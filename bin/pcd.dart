@@ -306,65 +306,86 @@ The writing process is strictly sequential: either starting with the number one 
 or in the reversed order. This can be important for some mobile devices.
 ''';
 var unifiedNameHelp = '''
-destination root directory name and file names are based on <name>,
+Destination root directory name and file names are based on <name>,
 serial number prepended, file extensions retained; also album tag,
-if the latter is not specified explicitly''';
+if the latter is not specified explicitly.''';
 
 retrieveArgs(List<String> arguments) {
   var parser = new gs.ArgParser(allowTrailingOptions: false);
 
   parser.addFlag("help", abbr: "h", negatable: false);
+  parser.addFlag("version", abbr: "V", negatable: false);
   parser.addFlag("verbose",
-      abbr: "v", help: "verbose output", negatable: false);
+      abbr: "v", help: "Verbose output.", negatable: false);
   parser.addFlag("drop-tracknumber",
-      abbr: "d", help: "do not set track numbers", negatable: false);
+      abbr: "d", help: "Do not set track numbers.", negatable: false);
   parser.addFlag("strip-decorations",
       abbr: "s",
-      help: "strip file and directory name decorations",
+      help: "Strip file and directory name decorations.",
       negatable: false);
   parser.addFlag("file-title",
-      abbr: "f", help: "use file name for title tag", negatable: false);
+      abbr: "f", help: "Use file name for title tag.", negatable: false);
   parser.addFlag("file-title-num",
       abbr: "F",
-      help: "use numbered file name for title tag",
+      help: "Use numbered file name for title tag.",
       negatable: false);
   parser.addFlag("sort-lex",
-      abbr: "x", help: "sort files lexicographically", negatable: false);
+      abbr: "x", help: "Sort files lexicographically.", negatable: false);
   parser.addFlag("tree-dst",
       abbr: "t",
-      help: "retain the tree structure of the source album at destination",
+      help: "Retain the tree structure of the source album at destination.",
       negatable: false);
   parser.addFlag("drop-dst",
-      abbr: "p", help: "do not create destination directory", negatable: false);
+      abbr: "p", help: "Do not create destination directory.", negatable: false);
   parser.addFlag("reverse",
       abbr: "r",
       help:
-          "copy files in reverse order (number one file is the last to be copied)",
+          "Copy files in reverse order (number one file is the last to be copied).",
+      negatable: false);
+  parser.addFlag("overwrite",
+      abbr: "w",
+      help:
+      "Silently remove existing destination directory (not recommended).",
+      negatable: false);
+  parser.addFlag("dry-run",
+      abbr: "y",
+      help:
+      "Without actually modifying anything (trumps -w, too).",
+      negatable: false);
+  parser.addFlag("count",
+      abbr: "c",
+      help: "Just count the files.",
       negatable: false);
   parser.addFlag("prepend-subdir-name",
       abbr: "i",
-      help: "prepend current subdirectory name to a file name",
+      help: "Prepend current subdirectory name to a file name.",
       negatable: false);
   parser.addOption("file-type",
       abbr: "e",
       valueHelp: "extension",
-      help: "accept only audio files of the specified type");
+      help: "Accept only audio files of the specified type.");
   parser.addOption("unified-name",
       abbr: "u", valueHelp: "name", help: unifiedNameHelp);
+  parser.addOption("artist-tag",
+      abbr: "a", valueHelp: "tag", help: "Artist tag.");
+  parser.addOption("album-tag",
+      abbr: "m", valueHelp: "tag", help: "Album tag.");
   parser.addOption("album-num",
       abbr: "b",
       valueHelp: "number",
-      help: "0..99; prepend <number> to the destination root directory name");
-  parser.addOption("artist-tag",
-      abbr: "a", valueHelp: "tag", help: "artist tag name");
-  parser.addOption("album-tag",
-      abbr: "g", valueHelp: "tag", help: "album tag name");
+      help: "0..99; prepend <number> to the destination root directory name.");
+  parser.addFlag("context", help: "Print clean context.", negatable: false);
+  parser.addFlag("no-console", help: "No console mode.", negatable: false);
 
   var rg = parser.parse(arguments);
 
   if (rg['help'] || arguments.length == 0) {
     print(description);
     print(parser.usage);
+    exit(0);
+  }
+  if (rg['version'] || arguments.length == 0) {
+    print("Version");
     exit(0);
   }
   if (rg.rest.length < 2) {
