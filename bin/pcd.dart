@@ -104,18 +104,20 @@ var rSubstring = new RegExp(r'\"(?:\\.|[^\"\\])*\"');
 /// Reduces comma delimited list of [authors] to initials.
 ///
 String makeInitials(String authors) {
-  var bySpace = (s) => s
-      .split(rDot)
-      .where((x) => x != "")
-      .map((x) => x[0])
-      .join(".")
-      .toUpperCase();
-  var byHyph = (s) => s.split(rHyph).map((x) => bySpace(x)).join("-") + ".";
-
   return authors
       .replaceAll(rSubstring, " ")
       .split(",")
-      .map((x) => byHyph(x))
+      .map((author) =>
+          author
+              .split(rHyph)
+              .map((barrel) => barrel
+                  .split(rDot)
+                  .where((name) => name != "")
+                  .map((name) => name[0])
+                  .join(".")
+                  .toUpperCase())
+              .join("-") +
+          ".")
       .join(",");
 }
 
