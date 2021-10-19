@@ -115,7 +115,7 @@ String makeInitials(String authors) {
       .map((author) =>
           author
               .split("-")
-              .where((author) => author.replaceAll(".", "").trim() != "")
+              .where((barrel) => barrel.replaceAll(".", "").trim() != "")
               .map((barrel) => barrel
                   .split(rDot)
                   .where((name) => name != "")
