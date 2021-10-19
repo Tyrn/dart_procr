@@ -153,7 +153,7 @@ String decorateDirName(int i, String path) {
       p.basename(path);
 }
 
-String artist({prefix = "", suffix = ""}) {
+String artist({prefix: "", suffix: ""}) {
   if (opt['artist'] != null) {
     return prefix + opt['artist'] + suffix;
   }
@@ -177,22 +177,6 @@ void copyFile(int i, String src, String dst, {bool reverse: false}) {
   opt['verbose']
       ? print(i.toString().padLeft(_wdh_, ' ') + '/$_tot_ $dst')
       : stdout.write('.');
-}
-
-void traverseTreeDst(String src, String dstRoot, List<String> dstStep) {
-  var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
-
-  dirs.asMap().forEach((i, dir) {
-    var step = new List<String>.from(dstStep);
-    step.add(decorateDirName(i, dir));
-    new Directory(p.join(dstRoot, p.joinAll(step))).createSync();
-    traverseTreeDst(dir, dstRoot, step);
-  });
-  files.asMap().forEach((i, file) {
-    var dstPath = p.join(dstRoot,
-        p.join(p.joinAll(dstStep), decorateFileName(i, dstStep, file)));
-    //copyFile(file, dstPath);
-  });
 }
 
 Iterable<Tuple4<int, String, String, String>> walkFileTree(
@@ -219,8 +203,45 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     }
   }
 
-  yield* dirFlat(dirs);
-  yield* fileFlat(files);
+  int reverse(int i, List lst) {
+    return (opt['reverse']) ? lst.length - i : i + 1;
+  }
+
+  Iterable<Tuple4<int, String, String, String>> dirTree(
+      List<String> dirs) sync* {
+    var i = 0;
+    for (var directory in dirs) {
+      var step = new List<String>.from(dstStep);
+      step.add(decorateDirName(reverse(i, dirs), directory));
+      yield* walkFileTree(p.join(src, directory), dstRoot, fcount, step);
+      i++;
+    }
+  }
+
+  Iterable<Tuple4<int, String, String, String>> fileTree(
+      List<String> dirs) sync* {
+    var i = 0;
+    for (var file in files) {
+      yield Tuple4(
+          fcount[0],
+          p.join(src, file),
+          p.join(dstRoot, p.joinAll(dstStep)),
+          decorateFileName(reverse(i, files), dstStep, file));
+      (opt['reverse']) ? fcount[0]-- : fcount[0]++;
+      i++;
+    }
+  }
+
+  var dirFund = (opt['tree-dst']) ? dirTree : dirFlat;
+  var fileFund = (opt['tree-dst']) ? fileTree : fileFlat;
+
+  if (opt['reverse']) {
+    yield* fileFund(files);
+    yield* dirFund(dirs);
+  } else {
+    yield* dirFund(dirs);
+    yield* fileFund(files);
+  }
 }
 
 var _tot_ = 0;
@@ -228,6 +249,7 @@ var _wdh_ = 0;
 
 void groom(String src, String dst) {
   walkFileTree(src, dst, (opt['reverse']) ? [_tot_] : [1], []).forEach((t) {
+    new Directory(t.item3).createSync(recursive: true);
     copyFile(t.item1, t.item2, p.join(t.item3, t.item4));
   });
 }
