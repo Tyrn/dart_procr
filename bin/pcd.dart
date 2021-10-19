@@ -5,11 +5,13 @@ name: pcd
 dependencies:
   path:
   args:
+  tuple:
 */
 
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:args/args.dart' as gs;
+import 'package:tuple/tuple.dart';
 
 /// Returns true, if [path] has extension [ext], case and leading dot insensitive.
 ///
@@ -167,7 +169,7 @@ String decorateFileName(int i, List<String> dstStep, String path) {
   return prefix +
       (opt['unified-name'] == null
           ? p.basename(path)
-          : opt['unified-name'] +  artist(prefix: " - ") + p.extension(path));
+          : opt['unified-name'] + artist(prefix: " - ") + p.extension(path));
 }
 
 void copyFile(String src, String dst, {bool reverse: false}) {
@@ -181,31 +183,31 @@ void copyFile(String src, String dst, {bool reverse: false}) {
 void traverseTreeDst(String src, String dstRoot, List<String> dstStep) {
   var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
 
-  for (var i = 0; i < dirs.length; i++) {
+  dirs.asMap().forEach((i, dir) {
     var step = new List<String>.from(dstStep);
-    step.add(decorateDirName(i, dirs[i]));
+    step.add(decorateDirName(i, dir));
     new Directory(p.join(dstRoot, p.joinAll(step))).createSync();
-    traverseTreeDst(dirs[i], dstRoot, step);
-  }
-  for (var i = 0; i < files.length; i++) {
+    traverseTreeDst(dir, dstRoot, step);
+  });
+  files.asMap().forEach((i, file) {
     var dstPath = p.join(dstRoot,
-        p.join(p.joinAll(dstStep), decorateFileName(i, dstStep, files[i])));
-    copyFile(files[i], dstPath);
-  }
+        p.join(p.joinAll(dstStep), decorateFileName(i, dstStep, file)));
+    copyFile(file, dstPath);
+  });
 }
 
 void traverseFlatDst(String src, String dstRoot, List<String> dstStep) {
   var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
 
-  for (var i = 0; i < dirs.length; i++) {
+  dirs.forEach((dir) {
     var step = new List<String>.from(dstStep);
-    step.add(p.basename(dirs[i]));
-    traverseFlatDst(dirs[i], dstRoot, step);
-  }
-  for (var i = 0; i < files.length; i++) {
-    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, files[i]));
-    copyFile(files[i], dstPath);
-  }
+    step.add(p.basename(dir));
+    traverseFlatDst(dir, dstRoot, step);
+  });
+  files.forEach((file) {
+    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, file));
+    copyFile(file, dstPath);
+  });
 }
 
 void traverseFlatDstR(String src, String dstRoot, List<String> dstStep) {
@@ -213,16 +215,19 @@ void traverseFlatDstR(String src, String dstRoot, List<String> dstStep) {
       dirs = groomDirs(g, reverse: true),
       files = groomFiles(g, reverse: true);
 
-  for (var i = 0; i < files.length; i++) {
-    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, files[i]));
-    copyFile(files[i], dstPath, reverse: true);
-  }
-  for (var i = 0; i < dirs.length; i++) {
+  files.forEach((file) {
+    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, file));
+    copyFile(file, dstPath, reverse: true);
+  });
+  dirs.forEach((dir) {
     var step = new List<String>.from(dstStep);
-    step.add(p.basename(dirs[i]));
-    traverseFlatDstR(dirs[i], dstRoot, step);
-  }
+    step.add(p.basename(dir));
+    traverseFlatDstR(dir, dstRoot, step);
+  });
 }
+
+Iterable<Tuple4<int, String, String, String>> walkFileTree(
+    String src, String dstRoot, List<int> fcount, List<String> dstStep) sync* {}
 
 var _cnt_ = 1;
 var _tot_ = 0;
@@ -374,10 +379,8 @@ retrieveArgs(List<String> arguments) {
       help: "Accept only audio files of the specified type.");
   parser.addOption("unified-name",
       abbr: "u", valueHelp: "name", help: unifiedNameHelp);
-  parser.addOption("artist",
-      abbr: "a", valueHelp: "tag", help: "Artist tag.");
-  parser.addOption("album",
-      abbr: "m", valueHelp: "tag", help: "Album tag.");
+  parser.addOption("artist", abbr: "a", valueHelp: "tag", help: "Artist tag.");
+  parser.addOption("album", abbr: "m", valueHelp: "tag", help: "Album tag.");
   parser.addOption("album-num",
       abbr: "b",
       valueHelp: "number",
