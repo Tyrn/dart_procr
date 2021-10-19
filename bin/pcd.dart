@@ -172,12 +172,11 @@ String decorateFileName(int i, List<String> dstStep, String path) {
           : opt['unified-name'] + artist(prefix: " - ") + p.extension(path));
 }
 
-void copyFile(String src, String dst, {bool reverse: false}) {
+void copyFile(int i, String src, String dst, {bool reverse: false}) {
   new File(src).copySync(dst);
   opt['verbose']
-      ? print(_cnt_.toString().padLeft(_wdh_, ' ') + '/$_tot_ $dst')
+      ? print(i.toString().padLeft(_wdh_, ' ') + '/$_tot_ $dst')
       : stdout.write('.');
-  reverse ? _cnt_-- : _cnt_++;
 }
 
 void traverseTreeDst(String src, String dstRoot, List<String> dstStep) {
@@ -192,56 +191,45 @@ void traverseTreeDst(String src, String dstRoot, List<String> dstStep) {
   files.asMap().forEach((i, file) {
     var dstPath = p.join(dstRoot,
         p.join(p.joinAll(dstStep), decorateFileName(i, dstStep, file)));
-    copyFile(file, dstPath);
-  });
-}
-
-void traverseFlatDst(String src, String dstRoot, List<String> dstStep) {
-  var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
-
-  dirs.forEach((dir) {
-    var step = new List<String>.from(dstStep);
-    step.add(p.basename(dir));
-    traverseFlatDst(dir, dstRoot, step);
-  });
-  files.forEach((file) {
-    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, file));
-    copyFile(file, dstPath);
-  });
-}
-
-void traverseFlatDstR(String src, String dstRoot, List<String> dstStep) {
-  var g = listOffspring(src),
-      dirs = groomDirs(g, reverse: true),
-      files = groomFiles(g, reverse: true);
-
-  files.forEach((file) {
-    var dstPath = p.join(dstRoot, decorateFileName(_cnt_, dstStep, file));
-    copyFile(file, dstPath, reverse: true);
-  });
-  dirs.forEach((dir) {
-    var step = new List<String>.from(dstStep);
-    step.add(p.basename(dir));
-    traverseFlatDstR(dir, dstRoot, step);
+    //copyFile(file, dstPath);
   });
 }
 
 Iterable<Tuple4<int, String, String, String>> walkFileTree(
-    String src, String dstRoot, List<int> fcount, List<String> dstStep) sync* {}
+    String src, String dstRoot, List<int> fcount, List<String> dstStep) sync* {
+  var g = listOffspring(src),
+      dirs = groomDirs(g, reverse: opt['reverse']),
+      files = groomFiles(g, reverse: opt['reverse']);
 
-var _cnt_ = 1;
+  Iterable<Tuple4<int, String, String, String>> dirFlat(
+      List<String> dirs) sync* {
+    for (var directory in dirs) {
+      var step = new List<String>.from(dstStep);
+      step.add(p.basename(directory));
+      yield* walkFileTree(p.join(src, directory), dstRoot, fcount, step);
+    }
+  }
+
+  Iterable<Tuple4<int, String, String, String>> fileFlat(
+      List<String> files) sync* {
+    for (var file in files) {
+      yield Tuple4(fcount[0], p.join(src, file), dstRoot,
+          decorateFileName(fcount[0], dstStep, file));
+      (opt['reverse']) ? fcount[0]-- : fcount[0]++;
+    }
+  }
+
+  yield* dirFlat(dirs);
+  yield* fileFlat(files);
+}
+
 var _tot_ = 0;
 var _wdh_ = 0;
 
 void groom(String src, String dst) {
-  if (opt['tree-dst']) {
-    traverseTreeDst(src, dst, []);
-  } else if (opt['reverse']) {
-    _cnt_ = _tot_;
-    traverseFlatDstR(src, dst, []);
-  } else {
-    traverseFlatDst(src, dst, []);
-  }
+  walkFileTree(src, dst, (opt['reverse']) ? [_tot_] : [1], []).forEach((t) {
+    copyFile(t.item1, t.item2, p.join(t.item3, t.item4));
+  });
 }
 
 /// Sets up boilerplate required by the options; runs the show.
