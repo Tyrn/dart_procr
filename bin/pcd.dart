@@ -413,5 +413,18 @@ retrieveArgs(List<String> arguments) {
     print("Source and/or destination directory is missing.");
     exit(0);
   }
+  //traceArgResults(rg);
   return rg;
+}
+
+void traceArgResults(gs.ArgResults rg) {
+  rg.arguments.forEach((k) {
+    print(k);
+  });
+  rg.options.forEach((k) {
+    print(k);
+  });
+  rg.rest.forEach((k) {
+    print(k);
+  });
 }
