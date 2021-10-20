@@ -179,14 +179,20 @@ void copyFile(int i, String src, String dst, {bool reverse: false}) {
       : stdout.write('.');
 }
 
+/// Recursively traverses the source directory and yields a
+/// tuple of copying attributes:
+/// index, source file path, destination directory path, target file name.
+///
+/// The destination directory and target file names get decorated
+/// according to options.
+///
 Iterable<Tuple4<int, String, String, String>> walkFileTree(
     String src, String dstRoot, List<int> fcount, List<String> dstStep) sync* {
   var g = listOffspring(src),
       dirs = groomDirs(g, reverse: opt['reverse']),
       files = groomFiles(g, reverse: opt['reverse']);
 
-  dirFlat(
-      List<String> dirs) sync* {
+  dirFlat(List<String> dirs) sync* {
     for (var directory in dirs) {
       var step = new List<String>.from(dstStep);
       step.add(p.basename(directory));
@@ -194,8 +200,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     }
   }
 
-  fileFlat(
-      List<String> files) sync* {
+  fileFlat(List<String> files) sync* {
     for (var file in files) {
       yield Tuple4(fcount[0], p.join(src, file), dstRoot,
           decorateFileName(fcount[0], dstStep, file));
@@ -207,8 +212,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     return (opt['reverse']) ? lst.length - i : i + 1;
   }
 
-  dirTree(
-      List<String> dirs) sync* {
+  dirTree(List<String> dirs) sync* {
     var i = 0;
     for (var directory in dirs) {
       var step = new List<String>.from(dstStep);
@@ -218,8 +222,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     }
   }
 
-  fileTree(
-      List<String> dirs) sync* {
+  fileTree(List<String> dirs) sync* {
     var i = 0;
     for (var file in files) {
       yield Tuple4(
