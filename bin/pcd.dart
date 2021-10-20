@@ -73,29 +73,29 @@ int compareFile(String x, String y) {
 
 /// Returns a raw list of the [path] offspring.
 ///
-List listOffspring(String path) {
+List<FileSystemEntity> listOffspring(String path) {
   var dir = new Directory(path);
   return dir.listSync();
 }
 
 /// Returns a sorted list of directory paths, according to options.
 ///
-List<String> groomDirs(List offspring, {bool reverse: false}) {
+List<String> groomDirs(List<FileSystemEntity> offspring) {
   return offspring
       .where((x) => x is Directory)
-      .map((x) => x.path.toString())
+      .map((x) => x.path)
       .toList(growable: false)
-    ..sort(reverse ? (x, y) => comparePath(y, x) : comparePath);
+    ..sort(opt['reverse'] ? (x, y) => comparePath(y, x) : comparePath);
 }
 
 /// Returns a sorted list of file paths, according to options.
 ///
-List<String> groomFiles(List offspring, {bool reverse: false}) {
+List<String> groomFiles(List<FileSystemEntity> offspring) {
   return offspring
       .where((x) => x is File && isAudiofile(x.path))
-      .map((x) => x.path.toString())
+      .map((x) => x.path)
       .toList(growable: false)
-    ..sort(reverse ? (x, y) => compareFile(y, x) : compareFile);
+    ..sort(opt['reverse'] ? (x, y) => compareFile(y, x) : compareFile);
 }
 
 var rInt = new RegExp(r'\d+');
@@ -188,9 +188,7 @@ void copyFile(int i, String src, String dst, {bool reverse: false}) {
 ///
 Iterable<Tuple4<int, String, String, String>> walkFileTree(
     String src, String dstRoot, List<int> fcount, List<String> dstStep) sync* {
-  var g = listOffspring(src),
-      dirs = groomDirs(g, reverse: opt['reverse']),
-      files = groomFiles(g, reverse: opt['reverse']);
+  var g = listOffspring(src), dirs = groomDirs(g), files = groomFiles(g);
 
   dirFlat(List<String> dirs) sync* {
     for (var directory in dirs) {
