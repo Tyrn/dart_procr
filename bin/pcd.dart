@@ -185,7 +185,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
       dirs = groomDirs(g, reverse: opt['reverse']),
       files = groomFiles(g, reverse: opt['reverse']);
 
-  Iterable<Tuple4<int, String, String, String>> dirFlat(
+  dirFlat(
       List<String> dirs) sync* {
     for (var directory in dirs) {
       var step = new List<String>.from(dstStep);
@@ -194,7 +194,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     }
   }
 
-  Iterable<Tuple4<int, String, String, String>> fileFlat(
+  fileFlat(
       List<String> files) sync* {
     for (var file in files) {
       yield Tuple4(fcount[0], p.join(src, file), dstRoot,
@@ -207,7 +207,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     return (opt['reverse']) ? lst.length - i : i + 1;
   }
 
-  Iterable<Tuple4<int, String, String, String>> dirTree(
+  dirTree(
       List<String> dirs) sync* {
     var i = 0;
     for (var directory in dirs) {
@@ -218,7 +218,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
     }
   }
 
-  Iterable<Tuple4<int, String, String, String>> fileTree(
+  fileTree(
       List<String> dirs) sync* {
     var i = 0;
     for (var file in files) {
