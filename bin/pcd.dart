@@ -74,7 +74,7 @@ int compareFile(String x, String y) {
 /// Returns a raw list of the [path] offspring.
 ///
 List<FileSystemEntity> listOffspring(String path) {
-  var dir = new Directory(path);
+  var dir = Directory(path);
   return dir.listSync();
 }
 
@@ -98,10 +98,10 @@ List<String> groomFiles(List<FileSystemEntity> offspring) {
     ..sort(opt['reverse'] ? (x, y) => compareFile(y, x) : compareFile);
 }
 
-var rInt = new RegExp(r'\d+');
-var rDot = new RegExp(r'[\s.]+');
-var rHyph = new RegExp(r'\s*(?:-\s*)+');
-var rSubstring = new RegExp(r'\"(?:\\.|[^\"\\])*\"');
+var rInt = RegExp(r'\d+');
+var rDot = RegExp(r'[\s.]+');
+var rHyph = RegExp(r'\s*(?:-\s*)+');
+var rSubstring = RegExp(r'\"(?:\\.|[^\"\\])*\"');
 
 /// Reduces comma delimited list of [authors] to initials.
 ///
@@ -138,7 +138,7 @@ bool isAudiofile(String path) {
 /// Returns full recursive count of audiofiles in the [path] directory.
 ///
 int audiofilesCount(String path) {
-  var dir = new Directory(path);
+  var dir = Directory(path);
   var cnt = 0;
 
   List contents = dir.listSync(recursive: true);
@@ -173,7 +173,7 @@ String decorateFileName(int i, List<String> dstStep, String path) {
 }
 
 void copyFile(int i, String src, String dst, {bool reverse: false}) {
-  new File(src).copySync(dst);
+  File(src).copySync(dst);
   opt['verbose']
       ? print(i.toString().padLeft(_wdh_, ' ') + '/$_tot_ $dst')
       : stdout.write('.');
@@ -192,7 +192,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
 
   dirFlat(List<String> dirs) sync* {
     for (var directory in dirs) {
-      var step = new List<String>.from(dstStep);
+      var step = List<String>.from(dstStep);
       step.add(p.basename(directory));
       yield* walkFileTree(p.join(src, directory), dstRoot, fcount, step);
     }
@@ -213,7 +213,7 @@ Iterable<Tuple4<int, String, String, String>> walkFileTree(
   dirTree(List<String> dirs) sync* {
     var i = 0;
     for (var directory in dirs) {
-      var step = new List<String>.from(dstStep);
+      var step = List<String>.from(dstStep);
       step.add(decorateDirName(reverse(i, dirs), directory));
       yield* walkFileTree(p.join(src, directory), dstRoot, fcount, step);
       i++;
@@ -250,7 +250,7 @@ var _wdh_ = 0;
 
 void groom(String src, String dst) {
   walkFileTree(src, dst, (opt['reverse']) ? [_tot_] : [1], []).forEach((t) {
-    new Directory(t.item3).createSync(recursive: true);
+    Directory(t.item3).createSync(recursive: true);
     copyFile(t.item1, t.item2, p.join(t.item3, t.item4));
   });
 }
@@ -279,7 +279,7 @@ void buildAlbum() {
       print('Destination directory "${executiveDst}" already exists.');
       exit(0);
     } else {
-      new Directory(executiveDst).createSync();
+      Directory(executiveDst).createSync();
     }
   }
   // Running, at last!
@@ -337,7 +337,7 @@ serial number prepended, file extensions retained; also album tag,
 if the latter is not specified explicitly.''';
 
 retrieveArgs(List<String> arguments) {
-  var parser = new gs.ArgParser(allowTrailingOptions: false);
+  var parser = gs.ArgParser(allowTrailingOptions: false);
 
   parser.addFlag("help", abbr: "h", negatable: false);
   parser.addFlag("version", abbr: "V", negatable: false);
